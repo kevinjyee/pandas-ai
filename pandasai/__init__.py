@@ -30,7 +30,8 @@ You are provided with a pandas dataframe (df) with {num_rows} rows and {num_colu
 This is the result of `print(df.head({rows_to_display}))`:
 {df_head}.
 
-Return the python code (do not import anything) and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly to get the answer to the following question:
+Return the python code, and do not print the output. Return the final answer as a dataframe inside a varialbe called "final_answer". Do not import anything and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly 
+to get the answer to the following question based on the df provided above:
 """
     _response_instruction: str = """
 Question: {question}
@@ -74,11 +75,11 @@ Make sure to prefix the requested python code with {START_CODE_TAG} exactly and 
     code_output: Optional[str] = None
 
     def __init__(
-        self,
-        llm=None,
-        conversational=True,
-        verbose=False,
-        enforce_privacy=False,
+            self,
+            llm=None,
+            conversational=True,
+            verbose=False,
+            enforce_privacy=False,
     ):
         if llm is None:
             raise LLMNotFoundError(
@@ -105,13 +106,13 @@ Make sure to prefix the requested python code with {START_CODE_TAG} exactly and 
         return self._llm.call(instruction, "")
 
     def run(
-        self,
-        data_frame: pd.DataFrame,
-        prompt: str,
-        is_conversational_answer: bool = None,
-        show_code: bool = False,
-        anonymize_df: bool = True,
-        use_error_correction_framework: bool = True,
+            self,
+            data_frame: pd.DataFrame,
+            prompt: str,
+            is_conversational_answer: bool = None,
+            show_code: bool = False,
+            anonymize_df: bool = True,
+            use_error_correction_framework: bool = True,
     ) -> str:
         """Run the LLM with the given prompt"""
         self.log(f"Running PandasAI with {self._llm.type} LLM...")
@@ -175,30 +176,31 @@ Code generated:
             node
             for node in tree.body
             if not (
-                isinstance(node, (ast.Import, ast.ImportFrom))
-                and any(alias.name not in WHITELISTED_LIBRARIES for alias in node.names)
+                    isinstance(node, (ast.Import, ast.ImportFrom))
+                    and any(alias.name not in WHITELISTED_LIBRARIES for alias in node.names)
             )
         ]
         new_tree = ast.Module(body=new_body)
         return astor.to_source(new_tree).strip()
 
     def run_code(
-        self,
-        code: str,
-        data_frame: pd.DataFrame,
-        use_error_correction_framework: bool = True,
+            self,
+            code: str,
+            data_frame: pd.DataFrame,
+            use_error_correction_framework: bool = True,
     ) -> str:
         # pylint: disable=W0122 disable=W0123 disable=W0702:bare-except
         """Run the code in the current context and return the result"""
 
         # Redirect standard output to a StringIO buffer
+        loc = {}
         with redirect_stdout(io.StringIO()) as output:
             # Execute the code
             count = 0
             code_to_run = self.remove_unsafe_imports(code)
             while count < self._max_retries:
                 try:
-                    exec(
+                    lastValue = exec(
                         code_to_run,
                         {
                             "pd": pd,
@@ -212,6 +214,7 @@ Code generated:
                                 },
                             },
                         },
+                        loc
                     )
                     code = code_to_run
                     break
@@ -240,17 +243,11 @@ Code generated:
                         error_correcting_instruction, ""
                     )
 
-        captured_output = output.getvalue()
-
-        # Evaluate the last line and return its value or the captured output
-        lines = code.strip().split("\n")
-        last_line = lines[-1].strip()
-        if last_line.startswith("print(") and last_line.endswith(")"):
-            last_line = last_line[6:-1]
         try:
-            return eval(last_line)
+            return loc["final_answer"]
         except Exception:  # pylint: disable=W0718
-            return captured_output
+            #         Return an empty dataframe if the code does not return anything
+            return pd.DataFrame()
 
     def log(self, message: str):
         """Log a message"""
