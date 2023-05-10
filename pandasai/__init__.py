@@ -31,8 +31,7 @@ You are provided with a pandas dataframe (df) with {num_rows} rows and {num_colu
 This is the result of `print(df.head({rows_to_display}))`:
 {df_head}.
 
-Return the python code, and do not print the output. Return the final answer as a dataframe inside a varialbe called "final_answer". Do not import anything and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly 
-to get the answer to the following question based on the df provided above:
+Return the python code (do not import or print anything) and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly to get the answer to the following question:
 """
     _response_instruction: str = """
 Question: {question}
@@ -194,14 +193,13 @@ Code generated:
         """Run the code in the current context and return the result"""
 
         # Redirect standard output to a StringIO buffer
-        loc = {}
         with redirect_stdout(io.StringIO()) as output:
             # Execute the code
             count = 0
             code_to_run = self.remove_unsafe_imports(code)
             while count < self._max_retries:
                 try:
-                    lastValue = exec(
+                    exec(
                         code_to_run,
                         {
                             "pd": pd,
@@ -214,7 +212,6 @@ Code generated:
                                 },
                             },
                         },
-                        loc
                     )
                     code = code_to_run
                     break
@@ -243,11 +240,29 @@ Code generated:
                         error_correcting_instruction, ""
                     )
 
+        captured_output = output.getvalue()
+
+        # Evaluate the last line and return its value or the captured output
+        lines = code.strip().split("\n")
+        last_line = lines[-1].strip()
+        if last_line.startswith("print(") and last_line.endswith(")"):
+            last_line = last_line[6:-1]
         try:
-            return loc["final_answer"]
+            return eval(
+                last_line,
+                {
+                    "pd": pd,
+                    "df": data_frame,
+                    "__builtins__": {
+                        **{
+                            builtin: __builtins__[builtin]
+                            for builtin in WHITELISTED_BUILTINS
+                        },
+                    },
+                },
+            )
         except Exception:  # pylint: disable=W0718
-            #         Return an empty dataframe if the code does not return anything
-            return pd.DataFrame()
+            return captured_output
 
     def log(self, message: str):
         """Log a message"""
