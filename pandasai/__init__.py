@@ -6,6 +6,7 @@ from datetime import date
 from typing import Optional
 
 import astor
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from .constants import (
@@ -205,9 +206,8 @@ Code generated:
                         {
                             "pd": pd,
                             "df": data_frame,
+                            "plt": plt,
                             "__builtins__": {
-                                "pd": pd,
-                                "df": data_frame,
                                 **{
                                     builtin: __builtins__[builtin]
                                     for builtin in WHITELISTED_BUILTINS
