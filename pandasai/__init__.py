@@ -31,7 +31,7 @@ You are provided with a pandas dataframe (df) with {num_rows} rows and {num_colu
 This is the result of `print(df.head({rows_to_display}))`:
 {df_head}.
 
-Return the python code (do not import or print anything) and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly to get the answer to the following question:
+Return the python code returning a variable final_answer (do not import or print anything) and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly to get the answer to the following question:
 """
     _response_instruction: str = """
 Question: {question}
@@ -244,13 +244,15 @@ Code generated:
 
         captured_output = output.getvalue()
 
+
+
         # Evaluate the last line and return its value or the captured output
         lines = code.strip().split("\n")
         last_line = lines[-1].strip()
         if last_line.startswith("print(") and last_line.endswith(")"):
             last_line = last_line[6:-1]
         try:
-            return loc["final_answer"]
+            return loc['final_answer']
         except Exception:  # pylint: disable=W0718
             return captured_output
 
