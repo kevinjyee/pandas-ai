@@ -193,6 +193,7 @@ Code generated:
         """Run the code in the current context and return the result"""
 
         # Redirect standard output to a StringIO buffer
+        loc = {}
         with redirect_stdout(io.StringIO()) as output:
             # Execute the code
             count = 0
@@ -212,6 +213,7 @@ Code generated:
                                 },
                             },
                         },
+                        loc
                     )
                     code = code_to_run
                     break
@@ -248,19 +250,7 @@ Code generated:
         if last_line.startswith("print(") and last_line.endswith(")"):
             last_line = last_line[6:-1]
         try:
-            return eval(
-                last_line,
-                {
-                    "pd": pd,
-                    "df": data_frame,
-                    "__builtins__": {
-                        **{
-                            builtin: __builtins__[builtin]
-                            for builtin in WHITELISTED_BUILTINS
-                        },
-                    },
-                },
-            )
+            return loc["final_answer"]
         except Exception:  # pylint: disable=W0718
             return captured_output
 
