@@ -27,11 +27,11 @@ class PandasAI:
 
     _task_instruction: str = """
 Today is {today_date}.
-You are provided with a pandas dataframe (df) with {num_rows} rows and {num_columns} columns.
+You are provided with an in memory pandas dataframe (df) with {num_rows} rows and {num_columns} columns.
 This is the result of `print(df.head({rows_to_display}))`:
 {df_head}.
 
-Return the python code returning a variable final_answer (do not import or print anything) and make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly to get the answer to the following question:
+Return the python code returning a variable final_answer and as a pandas dataframe. Do not use pd.read_csv, assume df already has teh data in memory. Do not import any packages. Do not print anything. Make sure to prefix the requested python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly to get the answer to the following question:
 """
     _response_instruction: str = """
 Question: {question}
@@ -217,7 +217,8 @@ Code generated:
                     )
                     code = code_to_run
                     break
-                except Exception as e:  # pylint: disable=W0718 disable=C0103
+                except Exception as e:  # pylint: disable=
+                    self.log(e);# W0718 disable=C0103
                     if not use_error_correction_framework:
                         raise e
 
@@ -238,6 +239,8 @@ Code generated:
                             ],
                         )
                     )
+
+                    self.log("Error correcting instruction: " + error_correcting_instruction)
                     code_to_run = self._llm.generate_code(
                         error_correcting_instruction, ""
                     )
@@ -254,7 +257,7 @@ Code generated:
         try:
             return loc['final_answer']
         except Exception:  # pylint: disable=W0718
-            return captured_output
+            return "Sorry, I couldn't find an answer to your question. Please try again."
 
     def log(self, message: str):
         """Log a message"""
