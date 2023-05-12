@@ -198,7 +198,9 @@ Code generated:
             # Execute the code
             count = 0
             code_to_run = self.remove_unsafe_imports(code)
+
             while count < self._max_retries:
+                print(f"Attempt {count + 1}: {code_to_run}")
                 try:
                     exec(
                         code_to_run,
@@ -217,8 +219,9 @@ Code generated:
                     )
                     code = code_to_run
                     break
-                except Exception as e:  # pylint: disable=
-                    self.log(e);# W0718 disable=C0103
+                except Exception as e:  # pylint: disable=# W0718 disable=C0103
+                    print(str(e));
+                    self.log("Error in code: " + code_to_run)
                     if not use_error_correction_framework:
                         raise e
 
@@ -255,9 +258,12 @@ Code generated:
         if last_line.startswith("print(") and last_line.endswith(")"):
             last_line = last_line[6:-1]
         try:
-            return loc['final_answer']
-        except Exception:  # pylint: disable=W0718
-            return "Sorry, I couldn't find an answer to your question. Please try again."
+            return { "answer": loc['final_answer'], "code": code }
+            # log exception
+        except Exception as e:
+            self.log(loc)
+            print(str(e))
+            return { "answer": "Sorry, I couldn't find an answer to your question. Please try again.", "code": code }
 
     def log(self, message: str):
         """Log a message"""
